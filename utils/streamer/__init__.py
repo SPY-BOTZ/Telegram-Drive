@@ -30,9 +30,27 @@ async def media_streamer(channel: int, message_id: int, file_name: str, request)
     file_size = file_id.file_size
 
     if range_header:
-        from_bytes, until_bytes = range_header.replace("bytes=", "").split("-")
-        from_bytes = int(from_bytes)
-        until_bytes = int(until_bytes) if until_bytes else file_size - 1
+        try:
+            unit, byte_range = range_header.split("=", 1)
+            if unit.strip().lower() != "bytes" or "," in byte_range:
+                raise ValueError("Unsupported range")
+            start_text, end_text = byte_range.split("-", 1)
+            if not start_text:
+                # Suffix range: bytes=-N means the final N bytes.
+                suffix_length = int(end_text)
+                if suffix_length <= 0:
+                    raise ValueError("Invalid suffix range")
+                from_bytes = max(file_size - suffix_length, 0)
+                until_bytes = file_size - 1
+            else:
+                from_bytes = int(start_text)
+                until_bytes = int(end_text) if end_text else file_size - 1
+        except (ValueError, TypeError):
+            return Response(
+                status_code=416,
+                content="416: Range not satisfiable",
+                headers={"Content-Range": f"bytes */{file_size}"},
+            )
     else:
         from_bytes = 0
         until_bytes = file_size - 1
