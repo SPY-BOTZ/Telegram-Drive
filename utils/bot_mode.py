@@ -19,6 +19,8 @@ You can use this bot to upload files to your TG Drive website directly instead o
 🗄 **Commands:**
 /set_folder - Set folder for file uploads
 /current_folder - Check current folder
+/delete <file_id> - Delete a file from TG Drive (URL stops working)
+/files - List files in the current folder
 /zip - Start zip mode to combine multiple files
 /done - Finish zip and upload
 /cancel - Cancel current zip session
@@ -405,6 +407,54 @@ async def set_folder_callback(client: Client, callback_query: Message):
 async def current_folder_handler(client: Client, message: Message):
     global BOT_MODE
     await message.reply_text(f"Current Folder: {BOT_MODE.current_folder_name}")
+
+
+@main_bot.on_message(
+    filters.command("files") & filters.private & filters.user(config.TELEGRAM_ADMIN_IDS),
+)
+async def list_files_handler(client: Client, message: Message):
+    global DRIVE_DATA, BOT_MODE
+    try:
+        folder = DRIVE_DATA.get_directory(BOT_MODE.current_folder)
+        items = [item for item in folder.contents.values() if getattr(item, "type", None) == "file"]
+        if not items:
+            return await message.reply_text("📂 Current folder has no files.")
+        lines = ["📁 **Files in current folder:**"]
+        for item in items[:50]:
+            lines.append(f"• `{item.id}` — {item.name}")
+        lines.append("\nDelete with: `/delete FILE_ID`")
+        await message.reply_text("\n".join(lines))
+    except Exception as e:
+        await message.reply_text(f"❌ Could not list files: {e}")
+
+
+@main_bot.on_message(
+    filters.command("delete") & filters.private & filters.user(config.TELEGRAM_ADMIN_IDS),
+)
+async def delete_file_handler(client: Client, message: Message):
+    global DRIVE_DATA, BOT_MODE
+    parts = (message.text or "").split(maxsplit=1)
+    if len(parts) < 2:
+        return await message.reply_text(
+            "Usage: `/delete FILE_ID`\nGet IDs with `/files`. This removes the file from TG Drive; its web URL will stop working."
+        )
+    target_id = parts[1].strip().strip("/ ")
+    try:
+        folder = DRIVE_DATA.get_directory(BOT_MODE.current_folder)
+        item = folder.contents.get(target_id)
+        if item is None:
+            # Also accept a full path, e.g. /Folder/ABC123
+            item = DRIVE_DATA.get_file(target_id)
+            target_path = target_id
+        else:
+            target_path = f"{BOT_MODE.current_folder.rstrip('/')}/{target_id}".replace("//", "/")
+        if getattr(item, "type", None) != "file":
+            return await message.reply_text("❌ File not found. Use `/files` to check file IDs in current folder.")
+        file_name = item.name
+        DRIVE_DATA.delete_file_folder(target_path)
+        await message.reply_text(f"🗑️ Deleted: **{file_name}**\nIts TG Drive URL will no longer work.")
+    except Exception:
+        await message.reply_text("❌ File not found. Use `/files` or send `/delete FULL/PATH/FILE_ID`.")
 
 @main_bot.on_message(
     filters.private
