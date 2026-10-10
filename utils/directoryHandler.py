@@ -293,12 +293,15 @@ async def backup_drive_data(loop=True):
                 f"{time_text}"
             )
 
-            media_doc = InputMediaDocument(drive_cache_path, caption=caption)
+            media_doc = InputMediaDocument(
+                drive_cache_path,
+                caption=caption,
+                file_name="drive.data",
+            )
             msg = await client.edit_message_media(
                 config.STORAGE_CHANNEL,
                 config.DATABASE_BACKUP_MSG_ID,
                 media=media_doc,
-                file_name="drive.data",
             )
 
             DRIVE_DATA.isUpdated = False
@@ -357,11 +360,11 @@ async def loadDriveData():
             # Forcefully terminates the program immediately
             os.kill(os.getpid(), signal.SIGKILL)
 
-        if not msg.document:
-            logger.error(f"Error fetching backup message: {e}")
-
-            # Forcefully terminates the program immediately
-            os.kill(os.getpid(), signal.SIGKILL)
+        if not msg or not msg.document:
+            raise Exception(
+                "Backup message is missing or does not contain a document. "
+                "Set DATABASE_BACKUP_MSG_ID to a Telegram message containing drive.data."
+            )
 
         if msg.document.file_name == "drive.data":
             dl_path = await msg.download()
