@@ -13,7 +13,7 @@ function openFile() {
     let path = '/file?path=' + this.getAttribute('data-path') + '/' + this.getAttribute('data-id')
 
     if (fileName.endsWith('.mp4') || fileName.endsWith('.mkv') || fileName.endsWith('.webm') || fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.ts') || fileName.endsWith('.ogv')) {
-        path = '/stream?url=' + getRootUrl() + path
+        path = '/stream?url=' + encodeURIComponent(getRootUrl() + path)
     }
 
     window.open(path, '_blank')
@@ -186,7 +186,7 @@ async function shareFile() {
 
     let link
     if (fileName.endsWith('.mp4') || fileName.endsWith('.mkv') || fileName.endsWith('.webm') || fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.ts') || fileName.endsWith('.ogv')) {
-        link = `${root_url}/stream?url=${root_url}/file?path=${path}`
+        link = `${root_url}/stream?url=${encodeURIComponent(root_url + '/file?path=' + path)}`
     } else {
         link = `${root_url}/file?path=${path}`
 
