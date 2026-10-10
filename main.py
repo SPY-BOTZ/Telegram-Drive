@@ -4,7 +4,8 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 import aiofiles
 from fastapi import FastAPI, HTTPException, Request, File, UploadFile, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from config import ADMIN_PASSWORD, MAX_FILE_SIZE, STORAGE_CHANNEL
 from utils.clients import initialize_clients
@@ -34,12 +35,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- BASE ROUTES ---
+# --- WEBSITE + HEALTH ROUTES ---
+
+BASE_DIR = Path(__file__).resolve().parent
+WEBSITE_DIR = BASE_DIR / "website"
+STATIC_DIR = WEBSITE_DIR / "static"
+
+# Serve CSS, JavaScript and image assets used by website/home.html.
+if STATIC_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.get("/")
+async def website_home():
+    """Serve the TGDrive web interface instead of the backend status JSON."""
+    home_page = WEBSITE_DIR / "home.html"
+    if home_page.is_file():
+        return FileResponse(str(home_page), media_type="text/html")
+    return JSONResponse({"status": "Online", "service": "TGDrive-Backend-API", "warning": "website/home.html not found"})
+
 @app.head("/")
+async def website_head():
+    # Keep Koyeb's HEAD health checks successful while GET / serves the UI.
+    return Response(status_code=200)
+
+@app.get("/health")
+@app.head("/health")
 async def health_check():
     return JSONResponse({"status": "Online", "service": "TGDrive-Backend-API"})
+
+@app.get("/VideoPlayer.html")
+async def video_player_page():
+    player_page = WEBSITE_DIR / "VideoPlayer.html"
+    if player_page.is_file():
+        return FileResponse(str(player_page), media_type="text/html")
+    return JSONResponse({"error": "Video player page not found"}, status_code=404)
 
 @app.get("/file")
 async def dl_file(request: Request):
