@@ -37,6 +37,7 @@ app.add_middleware(
 # --- BASE ROUTES ---
 
 @app.get("/")
+@app.head("/")
 async def health_check():
     return JSONResponse({"status": "Online", "service": "TGDrive-Backend-API"})
 
