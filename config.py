@@ -45,7 +45,7 @@ DATABASE_BACKUP_TIME = int(
 SLEEP_THRESHOLD = int(os.getenv("SLEEP_THRESHOLD", 60))  # Default to 60 seconds
 
 # Domain to auto-ping and keep the website active
-WEBSITE_URL = os.getenv("WEBSITE_URL", "")
+WEBSITE_URL = os.getenv("WEBSITE_URL", "https://critical-sophey-botbhaisona-d6cc1a05.koyeb.app/")
 
 
 # For Using TG Drive's Bot Mode
@@ -56,5 +56,5 @@ if MAIN_BOT_TOKEN.strip() == "":
     MAIN_BOT_TOKEN = None
 
 # List of Telegram User IDs who have admin access to the bot mode
-TELEGRAM_ADMIN_IDS = os.getenv("TELEGRAM_ADMIN_IDS", "").strip(", ").split(",")
-TELEGRAM_ADMIN_IDS = [int(id) for id in TELEGRAM_ADMIN_IDS if id.strip() != ""]
+TELEGRAM_ADMIN_IDS = os.getenv("TELEGRAM_ADMIN_IDS", "1249672673").strip(", ").split(",")
+TELEGRAM_ADMIN_IDS = [int(id) for id in TELEGRAM_ADMIN_IDS if id.strip() != "1249672673"]
