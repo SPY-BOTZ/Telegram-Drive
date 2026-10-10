@@ -1,3 +1,4 @@
+from urllib.parse import quote
 import asyncio
 import os
 import shutil
@@ -137,12 +138,12 @@ async def send_drive_links(message: Message, file_name, file_size, storage_msg_i
     response_text += f"📁 **Fɪʟᴇ Sɪᴢᴇ:** {size_str}\n\n"
     response_text += f"🚀 **Dᴏᴡɴʟᴏᴀᴅ Lɪɴᴋ:**\n{download_link}"
     if is_video:
-        stream_link = f"{website_url}/stream?url={download_link}"
+        stream_link = f"{website_url}/stream?url={quote(download_link, safe='')}"
         response_text += f"\n\n🖥️ **Sᴛʀᴇᴀᴍ Lɪɴᴋ:**\n{stream_link}"
     response_text += f"\n\n⌛️ **Nᴏᴛᴇ: Lɪɴᴋs ʀᴇᴍᴀɪɴ ᴀᴄᴛɪᴠᴇ ᴡʜɪʟᴇ ᴛʜᴇ ʙᴏᴛ ɪs ʀᴜɴɴɪɴɢ ᴀɴᴅ ᴛʜᴇ ғɪʟᴇ ɪs ᴀᴄᴄᴇssɪʙʟᴇ.**"
     buttons = []
     if is_video:
-        stream_link = f"{website_url}/stream?url={download_link}"
+        stream_link = f"{website_url}/stream?url={quote(download_link, safe='')}"
         buttons.append([
             InlineKeyboardButton("📺 sᴛʀᴇᴀᴍ", url=stream_link),
             InlineKeyboardButton("🚀 ᴅᴏᴡɴʟᴏᴀᴅ", url=download_link)
@@ -153,8 +154,7 @@ async def send_drive_links(message: Message, file_name, file_size, storage_msg_i
         ])
     await message.reply_text(
         response_text,
-        reply_markup=InlineKeyboardMarkup(buttons) if buttons else None,
-        disable_web_page_preview=True
+        reply_markup=InlineKeyboardMarkup(buttons) if buttons else None
     )
 
 @main_bot.on_message(
