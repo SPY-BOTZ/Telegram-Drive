@@ -67,6 +67,8 @@ class ByteStreamer:
                 media_session = Session(
                     client,
                     file_id.dc_id,
+                    server_address,
+                    443,
                     await auth.create(),
                     test_mode,
                     is_media=True,
@@ -94,9 +96,17 @@ class ByteStreamer:
                     await media_session.stop()
                     raise AuthBytesInvalid
             else:
+                # Reuse the primary client's actual endpoint for its own DC.
+                primary_session = client.session
+                server_address = getattr(primary_session, "server_address", None)
+                port = getattr(primary_session, "port", 443)
+                if not server_address:
+                    server_address = "149.154.167.51"
                 media_session = Session(
                     client,
                     file_id.dc_id,
+                    server_address,
+                    port,
                     await client.storage.auth_key(),
                     test_mode,
                     is_media=True,
