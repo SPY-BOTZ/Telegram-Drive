@@ -40,35 +40,12 @@ class ByteStreamer:
         if media_session is None:
             test_mode = await client.storage.test_mode()
             if file_id.dc_id != await client.storage.dc_id():
-                # Kurigram's Auth constructor expects (client, dc_id, server_address, port, test_mode).
-                # Telegram's documented IPv4 DC endpoints; keep test endpoints separate.
-                dc_addresses = (
-                    {
-                        1: "149.154.175.10",
-                        2: "149.154.167.40",
-                        3: "149.154.175.117",
-                        4: "149.154.167.50",
-                        5: "91.108.56.100",
-                    }
-                    if test_mode
-                    else {
-                        1: "149.154.175.53",
-                        2: "149.154.167.51",
-                        3: "149.154.175.100",
-                        4: "149.154.167.91",
-                        5: "91.108.56.130",
-                    }
-                )
-                server_address = dc_addresses.get(file_id.dc_id)
-                if not server_address:
-                    raise ValueError(f"Unsupported Telegram DC ID: {file_id.dc_id}")
-                auth = Auth(client, file_id.dc_id, server_address, 443, test_mode)
+                # FIX: Added False, False for ipv6 and alt_port arguments required by Pyrogram 2.0
+                auth = Auth(client, file_id.dc_id, test_mode, False, False)
                 
                 media_session = Session(
                     client,
                     file_id.dc_id,
-                    server_address,
-                    443,
                     await auth.create(),
                     test_mode,
                     is_media=True,
@@ -96,17 +73,9 @@ class ByteStreamer:
                     await media_session.stop()
                     raise AuthBytesInvalid
             else:
-                # Reuse the primary client's actual endpoint for its own DC.
-                primary_session = client.session
-                server_address = getattr(primary_session, "server_address", None)
-                port = getattr(primary_session, "port", 443)
-                if not server_address:
-                    server_address = "149.154.167.51"
                 media_session = Session(
                     client,
                     file_id.dc_id,
-                    server_address,
-                    port,
                     await client.storage.auth_key(),
                     test_mode,
                     is_media=True,
